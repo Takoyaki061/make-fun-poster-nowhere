@@ -230,11 +230,30 @@ def draw_sun():
 def draw_beam():
     # lamp room sits near the top of the tower (tower top ~ y=300)
     ox, oy = 668, 286
-    # wide sweeping beam down to the left, landing on the dunes
-    blend_polygon([(ox, oy - 22), (ox, oy + 22), (400, 760), (400, 600)],
-                  (228, 87, 46), 78)
-    blend_polygon([(ox, oy - 10), (ox, oy + 10), (400, 720), (400, 640)],
-                  (244, 180, 110), 110)
+    # A beam of light disperses as it travels: paint it as stacked
+    # slices whose alpha falls off with distance from the lamp, so the
+    # beam fades instead of ending in a hard flat edge.
+    steps = 24
+    for alpha0, half, land_top, land_bot, color in (
+            (78, 22, 600, 760, (228, 87, 46)),
+            (110, 10, 640, 720, (244, 180, 110)),
+    ):
+        for i in range(steps):
+            t0 = i / steps
+            t1 = (i + 1) / steps
+            tm = (t0 + t1) / 2
+            a = int(alpha0 * (1 - tm) ** 1.5)
+            if a <= 0:
+                continue
+            top0 = oy - half + (land_top - (oy - half)) * t0
+            top1 = oy - half + (land_top - (oy - half)) * t1
+            bot0 = oy + half + (land_bot - (oy + half)) * t0
+            bot1 = oy + half + (land_bot - (oy + half)) * t1
+            x0 = ox + (400 - ox) * t0
+            x1 = ox + (400 - ox) * t1
+            blend_polygon([(int(x0), int(top0)), (int(x0), int(bot0)),
+                           (int(x1), int(bot1)), (int(x1), int(top1))],
+                          color, a)
 
 
 def draw_tower():
